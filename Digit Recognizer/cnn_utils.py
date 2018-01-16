@@ -17,8 +17,8 @@ def load_data():
     # test_images[test_images>0] = 1
     # train_images[train_images>0] = 1
 
-    test_images = test_images / 50
-    train_images = train_images / 50
+    test_images = test_images / 255.0
+    train_images = train_images / 255.0
 
     train_images = shape_image(train_images)
     test_images = shape_image(test_images)
@@ -39,6 +39,13 @@ def load_data():
 
     return X_train, Y_train, X_test, Y_test
 
+
+def load_predict_data():
+    new_data = pd.read_csv('./data/test.csv')
+    # new_data[new_data > 0] = 1
+    new_data = new_data / 255.0
+    new_data = shape_image(new_data).astype("float")
+    return new_data
 
 def convert_to_one_hot(Y, C):
     Y = np.eye(C)[Y.reshape(-1)].T
@@ -78,8 +85,10 @@ def forward_propagation(X, W1, W2, W3):
     P3 = tf.nn.max_pool(A3, ksize=[1,2,2,1], strides=[1,2,2,1], padding='VALID')
 
     P3 = tf.contrib.layers.flatten(P3)
-    Z4 = tf.contrib.layers.fully_connected(P3, 10, activation_fn=None)
-    return Z4
+    Z4 = tf.contrib.layers.fully_connected(P3, 32, activation_fn=tf.nn.relu)
+    Z = tf.contrib.layers.fully_connected(Z4, 10, activation_fn=None)
+
+    return Z
 
 
 def random_mini_batches(X, Y, mini_batch_size = 64, seed = 0):
@@ -111,65 +120,7 @@ def random_mini_batches(X, Y, mini_batch_size = 64, seed = 0):
     return mini_batches
 
 
-
-def compute_cost(Z3, Y):
-    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=Z3, labels=Y)) 
+def compute_cost(Z, Y):
+    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=Z, labels=Y)) 
     return cost
 
-
-
-
-# def forward_propagation_for_predict(X, parameters):
-#     """
-#     Implements the forward propagation for the model: LINEAR -> RELU -> LINEAR -> RELU -> LINEAR -> SOFTMAX
-    
-#     Arguments:
-#     X -- input dataset placeholder, of shape (input size, number of examples)
-#     parameters -- python dictionary containing your parameters "W1", "b1", "W2", "b2", "W3", "b3"
-#                   the shapes are given in initialize_parameters
-
-#     Returns:
-#     Z3 -- the output of the last LINEAR unit
-#     """
-    
-#     # Retrieve the parameters from the dictionary "parameters" 
-#     W1 = parameters['W1']
-#     b1 = parameters['b1']
-#     W2 = parameters['W2']
-#     b2 = parameters['b2']
-#     W3 = parameters['W3']
-#     b3 = parameters['b3'] 
-#                                                            # Numpy Equivalents:
-#     Z1 = tf.add(tf.matmul(W1, X), b1)                      # Z1 = np.dot(W1, X) + b1
-#     A1 = tf.nn.relu(Z1)                                    # A1 = relu(Z1)
-#     Z2 = tf.add(tf.matmul(W2, A1), b2)                     # Z2 = np.dot(W2, a1) + b2
-#     A2 = tf.nn.relu(Z2)                                    # A2 = relu(Z2)
-#     Z3 = tf.add(tf.matmul(W3, A2), b3)                     # Z3 = np.dot(W3,Z2) + b3
-    
-#     return Z3
-
-# def predict(X, parameters):
-    
-#     W1 = tf.convert_to_tensor(parameters["W1"])
-#     b1 = tf.convert_to_tensor(parameters["b1"])
-#     W2 = tf.convert_to_tensor(parameters["W2"])
-#     b2 = tf.convert_to_tensor(parameters["b2"])
-#     W3 = tf.convert_to_tensor(parameters["W3"])
-#     b3 = tf.convert_to_tensor(parameters["b3"])
-    
-#     params = {"W1": W1,
-#               "b1": b1,
-#               "W2": W2,
-#               "b2": b2,
-#               "W3": W3,
-#               "b3": b3}
-    
-#     x = tf.placeholder("float", [12288, 1])
-    
-#     z3 = forward_propagation_for_predict(x, params)
-#     p = tf.argmax(z3)
-    
-#     sess = tf.Session()
-#     prediction = sess.run(p, feed_dict = {x: X})
-        
-#     return prediction
